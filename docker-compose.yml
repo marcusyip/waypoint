@@ -9,6 +9,8 @@ services:
       - redis
     env_file:
       - ./Docker/local.env
+    links:
+      - "redis:database"
   worker:
     image: waypoint:latest
     command: go-wrapper run worker
@@ -16,6 +18,8 @@ services:
       - waypoint 
     env_file:
       - ./Docker/local.env
+    links:
+      - "redis:database"
   redis:
     image: redis:latest
     ports:

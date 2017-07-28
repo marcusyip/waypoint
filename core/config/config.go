@@ -74,6 +74,12 @@ func loadFromEnv(config *Config) {
 	ifExist("REDIS_ADDRESS", func(v string) {
 		config.Redis.Address = v
 	})
+	ifExist("MACHINERY_BROKER", func(v string) {
+		config.Machinery.Broker = v
+	})
+	ifExist("MACHINERY_RESULT_BACKEND", func(v string) {
+		config.Machinery.ResultBackend = v
+	})
 	ifExist("GOOGLE_API_KEY", func(v string) {
 		config.GoogleAPI.APIKey = v
 	})

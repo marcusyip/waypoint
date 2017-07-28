@@ -43,20 +43,24 @@ func (c *RouteController) Show(rw http.ResponseWriter, r *http.Request, ps httpr
 }
 
 func (c *RouteController) Create(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	log := c.getLogger("Create")
 	var route [][]string
 	err := json.NewDecoder(r.Body).Decode(&route)
 	if err != nil {
+		log.WithField("err", err).Info("Unable to unmarshal JSON")
 		c.Error(rw, 400, 10001, err.Error())
 		return
 	}
 	task, err := c.routeMgr.CreateAsyncTask(queue.GetServer(), route)
 	if err != nil {
+		log.WithField("err", err).Info("Failed to create task")
 		c.Error(rw, 400, 99999, "Unknown error")
 		return
 	}
 	resp := map[string]string{
 		"token": task.ID,
 	}
+	log.WithField("task_id", task.ID).Info("Successfully create task")
 	c.JSON(rw, 201, resp)
 }
 
