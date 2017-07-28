@@ -8,6 +8,8 @@ import (
 
 	machinery "github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/tasks"
+	"github.com/Sirupsen/logrus"
+	"github.com/waypoint/waypoint/core/logger"
 	"github.com/waypoint/waypoint/core/maps"
 	"github.com/waypoint/waypoint/models"
 	repos "github.com/waypoint/waypoint/repositories"
@@ -21,7 +23,12 @@ type RouteManager interface {
 }
 
 type RouteManagerImpl struct {
+	logger   *logrus.Logger
 	taskRepo repos.RouteTaskRepository
+}
+
+func (mgr *RouteManagerImpl) getLogger(method string) *logrus.Entry {
+	return mgr.logger.WithFields(logrus.Fields{"manager": "RouteManager", "method": method})
 }
 
 func (mgr *RouteManagerImpl) GetByID(id string) (*models.RouteTask, error) {
@@ -58,8 +65,10 @@ func (mgr *RouteManagerImpl) CreateAsyncTask(queueServer *machinery.Server, rout
 }
 
 func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
+	log := mgr.getLogger("RunTask").WithField("route_task_id", routeTaskID)
 	m, err := mgr.taskRepo.Get(routeTaskID)
 	if err != nil {
+		log.WithField("err", err).Info("Failed to get route task data")
 		return err
 	}
 	task := m.(*models.RouteTask)
@@ -73,7 +82,6 @@ func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 	origin := task.Route[0]
 	destination := task.Route[len(task.Route)-1]
 	waypoints := make([]string, 0, len(task.Route)-2)
-	fmt.Printf("this %+v", task)
 	for _, point := range task.Route[1 : len(task.Route)-1] {
 		waypoints = append(waypoints, fmt.Sprintf("%s,%s", point[0], point[1]))
 	}
@@ -86,8 +94,14 @@ func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 	}
 	resp, _, err := c.Directions(context.Background(), r)
 	if err != nil {
+		err2 := mgr.saveError(task, err.Error())
+		if err2 != nil {
+			log = log.WithField("err2", err2)
+		}
+		log.WithField("err", err).Info("Response with error")
 		return err
 	}
+	log.Info("Successfully calculate route")
 	return mgr.saveResult(task, resp)
 }
 
@@ -127,6 +141,7 @@ func latLng(lat float64, lng float64) []string {
 
 func GetRouteManager() RouteManager {
 	return &RouteManagerImpl{
+		logger:   logger.GetLogger(),
 		taskRepo: repos.GetRouteTaskRepository(),
 	}
 }
