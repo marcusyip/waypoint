@@ -1,0 +1,22 @@
+version: "3"
+services:
+  waypoint:
+    build: .
+    image: waypoint:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    env_file:
+      - ./Docker/local.env
+  worker:
+    image: waypoint:latest
+    command: go-wrapper run worker
+    depends_on:
+      - waypoint 
+    env_file:
+      - ./Docker/local.env
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"

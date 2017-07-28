@@ -1,0 +1,19 @@
+{
+  "API": {
+    "Port": 3000
+  },
+  "Redis": {
+    "Address": "192.168.99.100:6379",
+    "MaxConnection": 10
+  },
+  "GoogleAPI": {
+    "APIKey": "AIzaSyBtZpQkPtWdoXoZC3aOgYJCWLjuciNAOUk"
+  },
+  "Machinery": {
+    "Broker": "redis://192.168.99.100:6379",
+    "DefaultQueue": "waypoint_tasks",
+    "MaxWorkerInstances": 10,
+    "ResultBackend": "redis://192.168.99.100:6379",
+    "ResultsExpireIn": 3600000
+  }
+}

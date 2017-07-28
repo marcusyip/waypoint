@@ -1,0 +1,23 @@
+package: github.com/waypoint/waypoint
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^1.0.2
+- package: github.com/julienschmidt/httprouter
+  version: ^1.1.0
+- package: github.com/unrolled/render
+- package: gopkg.in/urfave/cli.v1
+  version: ^1.19.1
+- package: github.com/urfave/negroni
+  version: ^0.2.0
+- package: googlemaps.github.io/maps
+- package: github.com/kr/pretty
+- package: github.com/kr/text
+- package: github.com/RichardKnop/machinery
+  subpackages:
+  - v1
+- package: github.com/satori/go.uuid
+  version: ^1.1.0
+- package: github.com/garyburd/redigo
+  version: ^1.1.0
+  subpackages:
+  - redis

@@ -1,0 +1,70 @@
+hash: d0efa395ab559c11066111c7b74c65aefe5b9adcfb8cbe0ba65948deab573ff1
+updated: 2017-07-27T21:34:11.728630848+08:00
+imports:
+- name: github.com/bradfitz/gomemcache
+  version: 1952afaa557dc08e8e0d89eafab110fb501c1a2b
+  subpackages:
+  - memcache
+- name: github.com/garyburd/redigo
+  version: 433969511232c397de61b1442f9fd49ec06ae9ba
+  subpackages:
+  - internal
+  - redis
+- name: github.com/julienschmidt/httprouter
+  version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
+- name: github.com/kelseyhightower/envconfig
+  version: 70f0258d44cbaa3b6a2581d82f58da01a38e4de4
+- name: github.com/kr/pretty
+  version: cfb55aafdaf3ec08f0db22699ab822c50091b1c4
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
+- name: github.com/RichardKnop/logging
+  version: 0745ebe7cc826d7d0453c7c9f08ea75a7fe86f7b
+- name: github.com/RichardKnop/machinery
+  version: 6508cc57e4a07839b1b24e5489e3dfabfb5a991a
+  subpackages:
+  - v1
+  - v1/backends
+  - v1/brokers
+  - v1/common
+  - v1/config
+  - v1/log
+  - v1/retry
+  - v1/tasks
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Sirupsen/logrus
+  version: a3f95b5c423586578a4e099b11a46c2479628cac
+- name: github.com/streadway/amqp
+  version: dfe15e36048539f4cda41f240b27a5ca25b9cd46
+- name: github.com/unrolled/render
+  version: a0ec58421ddf111bd7efd3b7087399ca7d5da2f1
+- name: github.com/urfave/negroni
+  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
+- name: golang.org/x/net
+  version: f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f
+  subpackages:
+  - context
+  - context/ctxhttp
+- name: golang.org/x/sys
+  version: 02a66801d979d706a4b445e24e03916eeaa2a404
+  subpackages:
+  - unix
+- name: googlemaps.github.io/maps
+  version: 5645c6c5b8624296868ce95832ab366457eebc81
+  subpackages:
+  - internal
+- name: gopkg.in/mgo.v2
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
+- name: gopkg.in/redsync.v1
+  version: 98dabdf1c8574561bf976911c14ff652c47b1ddf
+- name: gopkg.in/urfave/cli.v1
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
+testImports: []
