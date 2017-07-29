@@ -43,12 +43,14 @@ func (mgr *RouteManagerImpl) GetByID(id string) (*models.RouteTask, error) {
 }
 
 func (mgr *RouteManagerImpl) CreateAsyncTask(queueServer *machinery.Server, route [][]string) (*models.RouteTask, error) {
+	// store task data and will use when run task
 	task := models.NewRouteTask()
 	task.Route = route
 	err := mgr.taskRepo.Set(task)
 	if err != nil {
 		return nil, err
 	}
+	// send task to job queue
 	signature := &tasks.Signature{
 		UUID: task.ID,
 		Name: "route",
@@ -68,13 +70,14 @@ func (mgr *RouteManagerImpl) CreateAsyncTask(queueServer *machinery.Server, rout
 
 func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 	log := mgr.getLogger("RunTask").WithField("route_task_id", routeTaskID)
+	// get the task data stored when CreateAsyncTask
 	m, err := mgr.taskRepo.Get(routeTaskID)
 	if err != nil {
 		log.WithField("err", err).Info("Failed to get route task data")
 		return err
 	}
 	task := m.(*models.RouteTask)
-
+	// validate the task data
 	err = mgr.validateTask(task)
 	if err != nil {
 		err2 := mgr.saveError(task, err.Error())
@@ -83,7 +86,7 @@ func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 		}
 		return err
 	}
-
+	// Request google maps api for routes
 	r := mgr.getDirectionsRequest(task)
 	resp, _, err := mgr.mapClient.Directions(context.Background(), r)
 	if err != nil {
@@ -106,6 +109,7 @@ func (mgr *RouteManagerImpl) validateTask(task *models.RouteTask) error {
 	return nil
 }
 
+// prepare directions request from task data
 func (mgr *RouteManagerImpl) getDirectionsRequest(task *models.RouteTask) *gmaps.DirectionsRequest {
 	origin := task.Route[0]
 	destination := task.Route[len(task.Route)-1]
@@ -121,18 +125,21 @@ func (mgr *RouteManagerImpl) getDirectionsRequest(task *models.RouteTask) *gmaps
 	}
 }
 
+// update task status to success, result from google maps API response
 func (mgr *RouteManagerImpl) saveResult(task *models.RouteTask, routes []gmaps.Route) error {
 	task.Status = models.RouteTaskStatusSuccess
 	task.Result = *mgr.getResult(routes)
 	return mgr.taskRepo.Set(task)
 }
 
+// update task status to error
 func (mgr *RouteManagerImpl) saveError(task *models.RouteTask, reason string) error {
 	task.Status = models.RouteTaskStatusError
 	task.Reason = reason
 	return mgr.taskRepo.Set(task)
 }
 
+// parse the google maps API response to our result
 func (mgr *RouteManagerImpl) getResult(routes []gmaps.Route) *models.RouteTaskResult {
 	result := &models.RouteTaskResult{}
 	route := routes[0]
