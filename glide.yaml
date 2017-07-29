@@ -21,3 +21,12 @@ import:
   version: ^1.1.0
   subpackages:
   - redis
+- package: github.com/golang/mock
+  version: ^1.0.0
+  subpackages:
+  - gomock
+  - mockgen
+- package: github.com/onsi/ginkgo
+  version: ^1.4.0
+- package: github.com/onsi/gomega
+  version: ^1.2.0

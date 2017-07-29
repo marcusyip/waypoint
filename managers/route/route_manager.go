@@ -9,6 +9,7 @@ import (
 	machinery "github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/Sirupsen/logrus"
+	"github.com/kr/pretty"
 	"github.com/waypoint/waypoint/core/logger"
 	"github.com/waypoint/waypoint/core/maps"
 	"github.com/waypoint/waypoint/models"
@@ -23,8 +24,9 @@ type RouteManager interface {
 }
 
 type RouteManagerImpl struct {
-	logger   *logrus.Logger
-	taskRepo repos.RouteTaskRepository
+	logger    *logrus.Logger
+	taskRepo  repos.RouteTaskRepository
+	mapClient maps.Client
 }
 
 func (mgr *RouteManagerImpl) getLogger(method string) *logrus.Entry {
@@ -72,27 +74,18 @@ func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 		return err
 	}
 	task := m.(*models.RouteTask)
-	if len(task.Route) < 2 {
-		err := mgr.saveError(task, "Missing origin or destination")
-		if err != nil {
-			return err
+
+	err = mgr.validateTask(task)
+	if err != nil {
+		err2 := mgr.saveError(task, err.Error())
+		if err2 != nil {
+			log = log.WithField("err2", err2)
 		}
-		return errors.New("Missing origin or destination")
+		return err
 	}
-	origin := task.Route[0]
-	destination := task.Route[len(task.Route)-1]
-	waypoints := make([]string, 0, len(task.Route)-2)
-	for _, point := range task.Route[1 : len(task.Route)-1] {
-		waypoints = append(waypoints, fmt.Sprintf("%s,%s", point[0], point[1]))
-	}
-	c := maps.GetClient()
-	r := &gmaps.DirectionsRequest{
-		Mode:        gmaps.TravelModeDriving,
-		Origin:      fmt.Sprintf("%s,%s", origin[0], origin[1]),
-		Destination: fmt.Sprintf("%s,%s", destination[0], destination[1]),
-		Waypoints:   waypoints,
-	}
-	resp, _, err := c.Directions(context.Background(), r)
+
+	r := mgr.getDirectionsRequest(task)
+	resp, _, err := mgr.mapClient.Directions(context.Background(), r)
 	if err != nil {
 		err2 := mgr.saveError(task, err.Error())
 		if err2 != nil {
@@ -101,8 +94,31 @@ func (mgr *RouteManagerImpl) RunTask(routeTaskID string) error {
 		log.WithField("err", err).Info("Response with error")
 		return err
 	}
+	pretty.Print(resp)
 	log.Info("Successfully calculate route")
 	return mgr.saveResult(task, resp)
+}
+
+func (mgr *RouteManagerImpl) validateTask(task *models.RouteTask) error {
+	if len(task.Route) < 2 {
+		return errors.New("Missing origin or destination")
+	}
+	return nil
+}
+
+func (mgr *RouteManagerImpl) getDirectionsRequest(task *models.RouteTask) *gmaps.DirectionsRequest {
+	origin := task.Route[0]
+	destination := task.Route[len(task.Route)-1]
+	waypoints := make([]string, 0, len(task.Route)-2)
+	for _, point := range task.Route[1 : len(task.Route)-1] {
+		waypoints = append(waypoints, fmt.Sprintf("%s,%s", point[0], point[1]))
+	}
+	return &gmaps.DirectionsRequest{
+		Mode:        gmaps.TravelModeDriving,
+		Origin:      fmt.Sprintf("%s,%s", origin[0], origin[1]),
+		Destination: fmt.Sprintf("%s,%s", destination[0], destination[1]),
+		Waypoints:   waypoints,
+	}
 }
 
 func (mgr *RouteManagerImpl) saveResult(task *models.RouteTask, routes []gmaps.Route) error {
@@ -121,12 +137,13 @@ func (mgr *RouteManagerImpl) getResult(routes []gmaps.Route) *models.RouteTaskRe
 	result := &models.RouteTaskResult{}
 	route := routes[0]
 	result.Path = make([][]string, 0, len(route.Legs))
+
 	startLocation := route.Legs[0].StartLocation
 	result.Path = append(result.Path, latLng(startLocation.Lat, startLocation.Lng))
-	for _, leg := range route.Legs {
-		result.TotalDistance += leg.Distance.Meters
-		result.TotalTime += leg.Duration.Seconds()
-		endLocation := leg.EndLocation
+	for _, step := range route.Legs[0].Steps {
+		result.TotalDistance += step.Distance.Meters
+		result.TotalTime += step.Duration.Seconds()
+		endLocation := step.EndLocation
 		result.Path = append(result.Path, latLng(endLocation.Lat, endLocation.Lng))
 	}
 	return result
@@ -141,7 +158,8 @@ func latLng(lat float64, lng float64) []string {
 
 func GetRouteManager() RouteManager {
 	return &RouteManagerImpl{
-		logger:   logger.GetLogger(),
-		taskRepo: repos.GetRouteTaskRepository(),
+		logger:    logger.GetLogger(),
+		taskRepo:  repos.GetRouteTaskRepository(),
+		mapClient: maps.GetClient(),
 	}
 }
