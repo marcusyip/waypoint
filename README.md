@@ -10,7 +10,7 @@ http://{docker_ip}:3000
 
 # Structure
 
-`xforum.go` - app main
+waypoint.go` - app main
 
 `api` - API server, router, controller
 
